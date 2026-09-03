@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: cyber-cafe-platform
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cybercafe
+    username: postgres
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970 # Sample 256-bit secret
+  expiration: 86400000 # 24 hours
