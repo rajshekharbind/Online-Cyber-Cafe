@@ -15,7 +15,6 @@ The platform focuses on **security, transparency, application tracking, document
 
 <tr>
 <td><img src="screenshots/Screenshot%202026-09-03%20231845.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20231950.png" width="180"/></td>
 <td><img src="screenshots/Screenshot%202026-09-03%20232022.png" width="180"/></td>
 <td><img src="screenshots/Screenshot%202026-09-03%20232102.png" width="180"/></td>
 <td><img src="screenshots/Screenshot%202026-09-03%20232127.png" width="180"/></td>
