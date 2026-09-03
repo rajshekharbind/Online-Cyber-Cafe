@@ -18,6 +18,7 @@ The platform focuses on **security, transparency, application tracking, document
 <td><img src="screenshots/Screenshot%202026-09-03%20232022.png" width="180"/></td>
 <td><img src="screenshots/Screenshot%202026-09-03%20232102.png" width="180"/></td>
 <td><img src="screenshots/Screenshot%202026-09-03%20232127.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233852.png" width="180"/></td>
 </tr>
 
 <tr>
@@ -98,14 +99,6 @@ The platform focuses on **security, transparency, application tracking, document
 <td><img src="screenshots/Screenshot%202026-09-03%20233755.png" width="180"/></td>
 <td><img src="screenshots/Screenshot%202026-09-03%20233811.png" width="180"/></td>
 <td><img src="screenshots/Screenshot%202026-09-03%20233827.png" width="180"/></td>
-</tr>
-
-<tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20233852.png" width="180"/></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 
 </table>
