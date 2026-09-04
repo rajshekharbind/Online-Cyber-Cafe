@@ -11,94 +11,121 @@ The platform focuses on **security, transparency, application tracking, document
 ---
 ## 📸 Screenshots
 
+## 📸 Screenshots
+
 <table>
-
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20231845.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232022.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232102.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232127.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233852.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20231845.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20231950.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232022.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20232137.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232148.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232213.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232236.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232246.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232102.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232127.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232137.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20232318.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232330.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232346.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232402.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232419.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232148.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232213.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232236.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20232434.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232452.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232512.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232522.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232535.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232246.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232318.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232330.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20232600.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232622.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232653.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232707.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232723.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232346.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232402.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232419.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20232742.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232750.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232822.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232931.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20232953.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232434.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232452.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232512.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20233006.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233019.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233037.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233123.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233153.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232522.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232535.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232600.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20233208.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233222.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233232.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233344.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233400.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232622.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232653.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232707.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20233424.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233446.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233459.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233511.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233536.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232723.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232742.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232750.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20233558.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233620.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233632.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233648.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233704.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232822.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232931.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20232953.png" width="150"/></td>
 </tr>
 
 <tr>
-<td><img src="screenshots/Screenshot%202026-09-03%20233721.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233736.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233755.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233811.png" width="180"/></td>
-<td><img src="screenshots/Screenshot%202026-09-03%20233827.png" width="180"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233006.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233019.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233037.png" width="150"/></td>
+</tr>
+
+<tr>
+<td><img src="screenshots/Screenshot%202026-09-03%20233123.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233153.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233208.png" width="150"/></td>
+</tr>
+
+<tr>
+<td><img src="screenshots/Screenshot%202026-09-03%20233222.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233232.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233344.png" width="150"/></td>
+</tr>
+
+<tr>
+<td><img src="screenshots/Screenshot%202026-09-03%20233400.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233424.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233446.png" width="150"/></td>
+</tr>
+
+<tr>
+<td><img src="screenshots/Screenshot%202026-09-03%20233459.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233511.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233536.png" width="150"/></td>
+</tr>
+
+<tr>
+<td><img src="screenshots/Screenshot%202026-09-03%20233558.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233620.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233632.png" width="150"/></td>
+</tr>
+
+<tr>
+<td><img src="screenshots/Screenshot%202026-09-03%20233648.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233704.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233721.png" width="150"/></td>
+</tr>
+
+<tr>
+<td><img src="screenshots/Screenshot%202026-09-03%20233736.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233755.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233811.png" width="150"/></td>
+</tr>
+
+<tr>
+<td><img src="screenshots/Screenshot%202026-09-03%20233827.png" width="150"/></td>
+<td><img src="screenshots/Screenshot%202026-09-03%20233852.png" width="150"/></td>
+<td></td>
 </tr>
 
 </table>
