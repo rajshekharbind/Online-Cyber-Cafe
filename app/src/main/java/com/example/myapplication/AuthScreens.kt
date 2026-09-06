@@ -94,6 +94,7 @@ fun RegisterScreen(onNavigateToOtp: (String) -> Unit, onBackToLogin: () -> Unit)
     }
 
     var isLoading by remember { mutableStateOf(false) }
+    var networkErrorMessage by remember { mutableStateOf<String?>(null) } // Req 52/54
     val scope = rememberCoroutineScope()
     val roles = listOf("STUDENT")  // Employee accounts are admin-created only
 
@@ -314,11 +315,17 @@ fun RegisterScreen(onNavigateToOtp: (String) -> Unit, onBackToLogin: () -> Unit)
                             }
                             SecurityStore.logAuth(email, "Account registered successfully via backend", true)
                         } catch (e: Exception) {
-                            // Backend unavailable — silently continue in demo mode
+                            // Req 52/54: Show user-friendly error instead of raw exception
+                            val friendly = AppError.userMessage(e)
+                            // Only surface real errors — backend offline is expected in demo
+                            if (!e.message.orEmpty().contains("ConnectException") &&
+                                !e.message.orEmpty().contains("UnknownHost")) {
+                                networkErrorMessage = friendly
+                            }
                             SecurityStore.logAuth(email, "Registration in demo mode (backend unavailable)", true)
                         }
                         isLoading = false
-                        onNavigateToOtp(mobile)
+                        if (networkErrorMessage == null) onNavigateToOtp(mobile)
                     }
                 },
                 modifier = Modifier
@@ -340,6 +347,21 @@ fun RegisterScreen(onNavigateToOtp: (String) -> Unit, onBackToLogin: () -> Unit)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Req 52/54: User-friendly network error display
+            if (networkErrorMessage != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                ) {
+                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.ErrorOutline, null, tint = Color.Red, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(networkErrorMessage!!, color = Color.Red, fontSize = 13.sp)
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
 
             TextButton(onClick = onBackToLogin, enabled = !isLoading) {
                 Text("Already have an account? Login")

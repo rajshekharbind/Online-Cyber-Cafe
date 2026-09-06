@@ -33,10 +33,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Initialize session manager with encrypted storage
         SessionManager.init(applicationContext)
+        // Initialize Room DB (triggers seed on first launch)
+        val vmFactory = AppViewModelFactory(applicationContext)
+        // Start background workers
+        BackgroundWorkerManager.startPeriodicJobs()
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
-                AppNavigation()
+                CompositionLocalProvider(LocalAppViewModelFactory provides vmFactory) {
+                    AppNavigation()
+                }
             }
         }
     }
@@ -73,8 +79,8 @@ sealed class Screen {
     class TrackingApplication(val appId: String) : Screen()
     object SupportChat : Screen()
     object ApplicationHistory : Screen()
-    class ApplicationSummary(val jobTitle: String, val officialFee: String, val serviceFee: String, val total: String) : Screen()
-    class Checkout(val jobTitle: String, val officialFee: String, val serviceFee: String, val amount: String) : Screen()
+    data class ApplicationSummary(val jobTitle: String, val officialFee: String, val serviceFee: String, val total: String) : Screen()
+    data class Checkout(val jobTitle: String, val officialFee: String, val serviceFee: String, val amount: String, val appId: String) : Screen()
     object NotificationCenter : Screen()
     // ── Human Support screens ──
     object SupportHub : Screen()
@@ -212,7 +218,9 @@ fun AppNavigation() {
             serviceFee = screen.serviceFee,
             totalAmount = screen.total,
             onConfirm = {
-                currentScreen = Screen.Checkout(screen.jobTitle, screen.officialFee, screen.serviceFee, screen.total)
+                val newAppId = "APP-${(1000..9999).random()}"
+                SecurityStore.logConsent(SessionManager.currentEmail, newAppId, "v1.0")
+                currentScreen = Screen.Checkout(screen.jobTitle, screen.officialFee, screen.serviceFee, screen.total, newAppId)
             },
             onBack = {
                 currentScreen = Screen.StudentDashboard
@@ -432,14 +440,23 @@ fun AppNavigation() {
             onPaymentSuccess = { orderId, payId, offFee, servFee, total ->
                 // Record secure transaction with all 11 required fields
                 TransactionStore.recordTransaction(
-                    userId = "USER-9921",
-                    appId = "APP-${(100..999).random()}",
+                    userId = SessionManager.currentEmail.ifBlank { "USER-9921" },
+                    appId = screen.appId,
                     orderId = orderId,
                     payId = payId,
                     official = offFee,
                     service = servFee,
                     total = total,
                     gatewayRef = "GREF-${(1000..9999).random()}"
+                )
+                
+                // Also create the actual assignment for the employee to process
+                AssignmentStore.assignApplication(
+                    appId = screen.appId,
+                    jobTitle = screen.jobTitle,
+                    studentName = SessionManager.currentEmail,
+                    deadline = "Unknown", // Can be pulled from JobStore
+                    priority = "Normal"
                 )
 
                 currentScreen = Screen.ApplicationHistory 

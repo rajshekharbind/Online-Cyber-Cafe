@@ -53,3 +53,30 @@ interface AuthServiceApi {
 data class RegisterRequestDto(val email: String, val password: String, val role: String)
 data class LoginRequestDto(val email: String, val password: String)
 data class AuthResponseDto(val token: String, val role: String? = null)
+
+// ── Req 52: User-Friendly Error Handling ──────────────────────────────
+/**
+ * Never surface raw HTTP/system errors to the user.
+ * Map all error codes to friendly, actionable strings.
+ */
+object AppError {
+    fun userMessage(throwable: Throwable): String = when {
+        throwable.message?.contains("401") == true ->
+            "Incorrect email or password. Please try again."
+        throwable.message?.contains("403") == true ->
+            "You don't have permission to do this. Contact support."
+        throwable.message?.contains("404") == true ->
+            "The requested information was not found. Please refresh."
+        throwable.message?.contains("409") == true ->
+            "A duplicate entry already exists. Please check your details."
+        throwable.message?.contains("429") == true ->
+            "Too many requests. Please wait a moment and try again."
+        throwable.message?.contains("5") == true ->
+            "Our servers are busy right now. Please try again in a few minutes."
+        throwable.message?.contains("UnknownHost") == true ||
+        throwable.message?.contains("timeout") == true ->
+            "No internet connection. Please check your network settings."
+        else ->
+            "Something went wrong. Please try again or contact support."
+    }
+}

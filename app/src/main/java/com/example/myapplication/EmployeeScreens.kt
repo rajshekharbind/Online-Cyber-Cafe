@@ -196,6 +196,7 @@ fun ApplicationProcessingScreen(appId: String, onBack: () -> Unit) {
     var showReceiptUpload by remember { mutableStateOf(false) }
     var problemReported by remember { mutableStateOf<String?>(null) }
     var showVerificationRequested by remember { mutableStateOf(false) }
+    var showReadinessChecklist by remember { mutableStateOf(false) } // Req 60
     val scope = rememberCoroutineScope()
 
     val launcher = rememberLauncherForActivityResult(
@@ -246,6 +247,52 @@ fun ApplicationProcessingScreen(appId: String, onBack: () -> Unit) {
             title = { Text("Verification Requested") },
             text = { Text("The student has been notified to complete the OTP/Biometric authentication step personally via the support chat.") },
             confirmButton = { Button(onClick = { showVerificationRequested = false }) { Text("OK") } }
+        )
+    }
+
+    if (showReadinessChecklist) { // Req 60
+        var allChecked by remember { mutableStateOf(false) }
+        var check1 by remember { mutableStateOf(false) }
+        var check2 by remember { mutableStateOf(false) }
+        var check3 by remember { mutableStateOf(false) }
+
+        LaunchedEffect(check1, check2, check3) {
+            allChecked = check1 && check2 && check3
+        }
+
+        AlertDialog(
+            onDismissRequest = { showReadinessChecklist = false },
+            title = { Text("Application Readiness Checklist", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Verify the following before starting:", fontSize = 14.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = check1, onCheckedChange = { check1 = it })
+                        Text("All required documents uploaded")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = check2, onCheckedChange = { check2 = it })
+                        Text("Payment status verified")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = check3, onCheckedChange = { check3 = it })
+                        Text("Deadline is acceptable")
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showReadinessChecklist = false
+                        status = AppStatus.IN_PROGRESS.code
+                        AssignmentStore.updateAssignment(appId, status = AppStatus.IN_PROGRESS.code)
+                    },
+                    enabled = allChecked
+                ) { Text("Start Processing") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReadinessChecklist = false }) { Text("Cancel") }
+            }
         )
     }
 
@@ -368,8 +415,7 @@ fun ApplicationProcessingScreen(appId: String, onBack: () -> Unit) {
                     // Action Buttons Row 1
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         ActionButton("Start Processing", Icons.Default.PlayArrow, Color(0xFF1976D2), Modifier.weight(1f)) {
-                            status = AppStatus.IN_PROGRESS.code
-                            AssignmentStore.updateAssignment(appId, status = AppStatus.IN_PROGRESS.code)
+                            showReadinessChecklist = true // Req 60
                         }
                         ActionButton("Req Verification", Icons.Default.HourglassEmpty, Color(0xFF9C27B0), Modifier.weight(1f)) {
                             status = AppStatus.WAITING_FOR_STUDENT.code

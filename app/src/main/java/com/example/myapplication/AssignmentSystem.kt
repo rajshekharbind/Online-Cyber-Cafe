@@ -166,8 +166,8 @@ data class ApplicationAssignment(
     var assignedEmployee: String,
     var priority: String,      // High | Medium | Low
     var deadline: String,
-    val studentName: String,
-    val jobTitle: String,
+    var studentName: String,
+    var jobTitle: String,
     val organization: String = "",
     val officialFee: String = "₹0",
     val serviceFee: String = "₹0",
@@ -256,18 +256,49 @@ object AssignmentStore {
 
     fun getAssignments() = assignments
 
-    fun assignApplication(appId: String, employee: String, priority: String, deadline: String) {
+    fun assignApplication(
+        appId: String, 
+        employee: String = "Unassigned", 
+        priority: String = "Normal", 
+        deadline: String = "Unknown",
+        studentName: String = "Student",
+        jobTitle: String = "Job"
+    ) {
+        // Req 48: Override priority with auto-calculated value from deadline
+        val autoPriority = when (calculatePriority(deadline)) {
+            PriorityLevel.CRITICAL -> "Critical"
+            PriorityLevel.HIGH     -> "High"
+            PriorityLevel.MEDIUM   -> "Medium"
+            PriorityLevel.NORMAL   -> "Normal"
+        }
+        val effectivePriority = autoPriority
+
         val existing = assignments.find { it.appId == appId }
         if (existing != null) {
             existing.assignedEmployee = employee
-            existing.priority = priority
+            existing.priority = effectivePriority
             existing.deadline = deadline
+            existing.studentName = studentName
+            existing.jobTitle = jobTitle
             addTimelineEvent(appId, AppStatus.ASSIGNED.code, "Reassigned to $employee")
         } else {
-            val a = ApplicationAssignment(appId, employee, priority, deadline, "Student", "Job",
+            val a = ApplicationAssignment(appId, employee, effectivePriority, deadline, studentName, jobTitle,
                 status = AppStatus.ASSIGNED.code)
             a.timeline.add(TimelineEvent(AppStatus.ASSIGNED.code, "Assigned to Processing Team", employee))
             assignments.add(a)
+        }
+    }
+
+    /** Req 48 — Called by BackgroundWorkerManager to refresh all priorities */
+    fun updateAutoPriorities() {
+        for (app in assignments) {
+            val newLabel = when (calculatePriority(app.deadline)) {
+                PriorityLevel.CRITICAL -> "Critical"
+                PriorityLevel.HIGH     -> "High"
+                PriorityLevel.MEDIUM   -> "Medium"
+                PriorityLevel.NORMAL   -> "Normal"
+            }
+            app.priority = newLabel
         }
     }
 

@@ -121,6 +121,23 @@ fun AdminApplicationDashboardScreen(onBack: () -> Unit, onNavigateToApplication:
                 singleLine = true
             )
 
+            // Critical Applications Dashboard (Req 56)
+            val criticalApps = filteredApps.filter { it.priority == "Critical" || it.priority == "High" }
+            if (criticalApps.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Warning, contentDescription = "Urgent", tint = Color.Red)
+                            Spacer(Modifier.width(8.dp))
+                            Text("URGENT: ${criticalApps.size} Critical Applications Approaching Deadline", color = Color.Red, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
             // Horizontal Table headers and list
             Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 Column {

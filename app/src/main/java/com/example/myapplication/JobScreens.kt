@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 enum class JobStatus(val label: String, val color: Color) {
     UPCOMING("Upcoming", Color(0xFF673AB7)),
@@ -67,9 +68,11 @@ enum class EligibilityStatus(val label: String, val color: Color) {
 fun JobDiscoveryScreen(
     onBack: () -> Unit, 
     onNavigateToApply: (String, String, String, String) -> Unit, 
-    onNavigateToNotifications: () -> Unit
+    onNavigateToNotifications: () -> Unit,
+    jobViewModel: JobViewModel = viewModel(factory = LocalAppViewModelFactory.current)
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    val jobsState by jobViewModel.jobsUiState.collectAsState()
+    val searchQuery by jobViewModel.searchQuery.collectAsState()
     
     // Mock Student Profile for matching
     val studentProfile = remember {
@@ -82,72 +85,31 @@ fun JobDiscoveryScreen(
         )
     }
 
-    // Use centralized JobStore
-    val jobs = JobStore.jobs
-
     // Smart Eligibility Matching Logic
-    fun calculateEligibility(job: StandardizedJob): EligibilityStatus {
-        val studentAge = studentProfile["age"] as Int
-        val studentDegree = studentProfile["degree"] as String
-        val studentBranch = studentProfile["branch"] as String
+    fun calculateEligibility(job: JobEntity): EligibilityStatus {
         val studentCgpa = studentProfile["cgpa"] as Double
-        val studentState = studentProfile["state"] as String
+        val studentBranch = studentProfile["branch"] as String
 
-        // 1. Age Check
-        val ageParts = job.ageLimit.split("-")
-        if (ageParts.size == 2) {
-            val minAge = ageParts[0].toIntOrNull() ?: 0
-            val maxAge = ageParts[1].toIntOrNull() ?: 99
-            if (studentAge < minAge || studentAge > maxAge) return EligibilityStatus.NOT_ELIGIBLE
-        }
-
-        // 2. Degree Check
-        if (job.qualification != "Degree" && job.qualification != "Any" && job.qualification != studentDegree) {
-            return EligibilityStatus.NOT_ELIGIBLE
-        }
-
-        // 3. Branch Check
-        if (job.branch != "Any" && !job.branch.contains(studentBranch)) {
+        if (studentCgpa < job.minCgpa) return EligibilityStatus.NOT_ELIGIBLE
+        if (job.eligibleBranches != "Any" && !job.eligibleBranches.contains(studentBranch)) {
             return EligibilityStatus.POTENTIALLY_ELIGIBLE
         }
-
-        // 4. CGPA Check
-        if (job.categoryRules.contains("CGPA")) {
-            val reqCgpa = job.categoryRules.filter { it.isDigit() || it == '.' }.toDoubleOrNull() ?: 0.0
-            if (studentCgpa < reqCgpa) return EligibilityStatus.NOT_ELIGIBLE
-        }
-
-        // 5. State Residency Check
-        if (job.categoryRules.contains("Bihar") && studentState != "Bihar") {
-            return EligibilityStatus.NOT_ELIGIBLE
-        }
-
         return EligibilityStatus.ELIGIBLE
     }
 
-    val visibleJobs = jobs.filter { 
-        it.isActive &&
-        (it.status == JobStatus.ACTIVE || it.status == JobStatus.DEADLINE_APPROACHING || it.status == JobStatus.UPCOMING) &&
-        (it.title.contains(searchQuery, ignoreCase = true) || it.organization.contains(searchQuery, ignoreCase = true))
-    }
-
-    val historicalJobs = jobs.filter {
-        it.isActive &&
-        (it.status == JobStatus.EXPIRED || it.status == JobStatus.CLOSED) &&
-        (it.title.contains(searchQuery, ignoreCase = true) || it.organization.contains(searchQuery, ignoreCase = true))
-    }
-
-    var selectedJobForDetail by remember { mutableStateOf<StandardizedJob?>(null) }
+    var selectedJobForDetail by remember { mutableStateOf<JobEntity?>(null) }
 
     if (selectedJobForDetail != null) {
+        val job = selectedJobForDetail!!
         JobDetailDialog(
-            job = selectedJobForDetail!!,
-            eligibility = calculateEligibility(selectedJobForDetail!!),
+            job = job,
+            eligibility = calculateEligibility(job),
             onDismiss = { selectedJobForDetail = null },
             onApply = { 
-                val serviceFee = ServiceChargeEngine.calculateServiceFee(selectedJobForDetail!!.officialFee.replace("₹","").toInt())
-                val totalAmount = "₹${selectedJobForDetail!!.officialFee.replace("₹","").toInt() + serviceFee}"
-                onNavigateToApply(selectedJobForDetail!!.title, selectedJobForDetail!!.officialFee, "₹$serviceFee", totalAmount)
+                val officialFeeNum = job.officialFee.replace("₹", "").toIntOrNull() ?: 0
+                val serviceFeeNum = ServiceChargeEngine.calculateServiceFee(officialFeeNum)
+                val totalAmount = "₹${officialFeeNum + serviceFeeNum}"
+                onNavigateToApply(job.title, job.officialFee, "₹$serviceFeeNum", totalAmount)
                 selectedJobForDetail = null
             }
         )
@@ -178,30 +140,53 @@ fun JobDiscoveryScreen(
         Column(modifier = Modifier.padding(innerPadding).fillMaxSize().padding(16.dp)) {
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { searchQuery = it },
+                onValueChange = { jobViewModel.setSearchQuery(it) },
                 placeholder = { Text("Search jobs, organizations...") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 shape = RoundedCornerShape(12.dp),
-                trailingIcon = { if(searchQuery.isNotEmpty()) IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Default.Clear, null) } }
+                trailingIcon = { if(searchQuery.isNotEmpty()) IconButton(onClick = { jobViewModel.setSearchQuery("") }) { Icon(Icons.Default.Clear, null) } }
             )
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (visibleJobs.isNotEmpty()) {
-                    item { Text("Active Listings", fontWeight = FontWeight.Bold, color = Color.Gray, fontSize = 12.sp) }
-                    items(visibleJobs) { job ->
-                        JobCard(job, eligibility = calculateEligibility(job), onDetail = { selectedJobForDetail = job })
+            when (val state = jobsState) {
+                is UiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
                 }
-                if (historicalJobs.isNotEmpty()) {
-                    item {
-                        Spacer(Modifier.height(8.dp))
-                        Text("Past Listings", fontWeight = FontWeight.Bold, color = Color.Gray, fontSize = 12.sp)
+                is UiState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Error loading jobs: ${state.message}", color = Color.Red)
                     }
-                    items(historicalJobs) { job ->
-                        JobCard(job, eligibility = calculateEligibility(job), onDetail = { selectedJobForDetail = job })
+                }
+                is UiState.Empty -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No jobs found matching your search.", color = Color.Gray)
+                    }
+                }
+                is UiState.Success -> {
+                    val allJobs = state.data
+                    val visibleJobs = allJobs.filter { it.status == "ACTIVE" || it.status == "PUBLISHED" }
+                    val historicalJobs = allJobs.filter { it.status == "CLOSED" || it.status == "EXPIRED" }
+
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (visibleJobs.isNotEmpty()) {
+                            item { Text("Active Listings", fontWeight = FontWeight.Bold, color = Color.Gray, fontSize = 12.sp) }
+                            items(visibleJobs) { job ->
+                                JobCard(job, eligibility = calculateEligibility(job), onDetail = { selectedJobForDetail = job })
+                            }
+                        }
+                        if (historicalJobs.isNotEmpty()) {
+                            item {
+                                Spacer(Modifier.height(8.dp))
+                                Text("Past Listings", fontWeight = FontWeight.Bold, color = Color.Gray, fontSize = 12.sp)
+                            }
+                            items(historicalJobs) { job ->
+                                JobCard(job, eligibility = calculateEligibility(job), onDetail = { selectedJobForDetail = job })
+                            }
+                        }
                     }
                 }
             }
@@ -210,29 +195,30 @@ fun JobDiscoveryScreen(
 }
 
 @Composable
-fun JobCard(job: StandardizedJob, eligibility: EligibilityStatus, onDetail: () -> Unit) {
+fun JobCard(job: JobEntity, eligibility: EligibilityStatus, onDetail: () -> Unit) {
+    val jobStatus = try { JobStatus.valueOf(job.status) } catch (e: Exception) { JobStatus.CLOSED }
     Card(
         onClick = onDetail,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if(job.status == JobStatus.EXPIRED || job.status == JobStatus.CLOSED) Color(0xFFFAFAFA) else Color.White
+            containerColor = if(jobStatus == JobStatus.EXPIRED || jobStatus == JobStatus.CLOSED) Color(0xFFFAFAFA) else Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if(job.status == JobStatus.ACTIVE) 3.dp else 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if(jobStatus == JobStatus.ACTIVE) 3.dp else 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(job.title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = if(job.status == JobStatus.EXPIRED) Color.Gray else Color(0xFF1976D2))
+                    Text(job.title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = if(jobStatus == JobStatus.EXPIRED) Color.Gray else Color(0xFF1976D2))
                     Text(job.organization, color = Color.Gray, fontSize = 14.sp)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Surface(
-                        color = job.status.color.copy(alpha = 0.1f),
+                        color = jobStatus.color.copy(alpha = 0.1f),
                         shape = RoundedCornerShape(4.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, job.status.color)
+                        border = androidx.compose.foundation.BorderStroke(1.dp, jobStatus.color)
                     ) {
-                        Text(text = job.status.label, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = job.status.color)
+                        Text(text = jobStatus.label, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = jobStatus.color)
                     }
                     Spacer(Modifier.height(4.dp))
                     Surface(color = eligibility.color.copy(alpha = 0.1f), shape = RoundedCornerShape(4.dp)) {
@@ -245,9 +231,9 @@ fun JobCard(job: StandardizedJob, eligibility: EligibilityStatus, onDetail: () -
             Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    val dateColor = if(job.status == JobStatus.DEADLINE_APPROACHING) Color(0xFFD32F2F) else Color.Gray
-                    Text("Deadline: ${job.lastDate}", fontSize = 12.sp, color = dateColor, fontWeight = if(job.status == JobStatus.DEADLINE_APPROACHING) FontWeight.Bold else FontWeight.Normal)
-                    Text("Fee: ${job.officialFee} + ${job.serviceCharge}", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    val dateColor = if(jobStatus == JobStatus.DEADLINE_APPROACHING) Color(0xFFD32F2F) else Color.Gray
+                    Text("Deadline: ${job.applicationDeadline}", fontSize = 12.sp, color = dateColor, fontWeight = if(jobStatus == JobStatus.DEADLINE_APPROACHING) FontWeight.Bold else FontWeight.Normal)
+                    Text("Fee: ${job.officialFee} + ${job.serviceFee}", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
                 Icon(Icons.Default.ChevronRight, null, tint = Color.LightGray)
             }
@@ -257,7 +243,7 @@ fun JobCard(job: StandardizedJob, eligibility: EligibilityStatus, onDetail: () -
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun JobDetailDialog(job: StandardizedJob, eligibility: EligibilityStatus, onDismiss: () -> Unit, onApply: () -> Unit) {
+fun JobDetailDialog(job: JobEntity, eligibility: EligibilityStatus, onDismiss: () -> Unit, onApply: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -288,10 +274,10 @@ fun JobDetailDialog(job: StandardizedJob, eligibility: EligibilityStatus, onDism
                     Text(eligibility.label, color = eligibility.color, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
                 
-                DetailItem("Age Limit", job.ageLimit)
-                DetailItem("Qualification", job.qualification)
-                DetailItem("Branch/Stream", job.branch)
-                DetailItem("Category Rules", job.categoryRules)
+                DetailItem("Age Limit", "Min 18")
+                DetailItem("Qualification", job.jobType)
+                DetailItem("Branch/Stream", job.eligibleBranches)
+                DetailItem("Category Rules", job.eligibilityCriteria)
                 DetailItem("Location", job.location)
                 DetailItem("Salary", job.salary)
                 
@@ -300,8 +286,10 @@ fun JobDetailDialog(job: StandardizedJob, eligibility: EligibilityStatus, onDism
                 // Fees Section
                 Text("Fee Structure", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1976D2))
                 DetailItem("Official Application Fee", job.officialFee)
-                DetailItem("Our Service Fee", job.serviceCharge)
-                val total = job.officialFee.replace("₹","").toInt() + job.serviceCharge.replace("₹","").toInt()
+                DetailItem("Our Service Fee", job.serviceFee)
+                val officialFeeNum = job.officialFee.replace("₹", "").toIntOrNull() ?: 0
+                val serviceFeeNum = job.serviceFee.replace("₹", "").toIntOrNull() ?: 0
+                val total = officialFeeNum + serviceFeeNum
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Total Payable Amount", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     Text("₹$total", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF4CAF50))
@@ -310,8 +298,8 @@ fun JobDetailDialog(job: StandardizedJob, eligibility: EligibilityStatus, onDism
                 HorizontalDivider(color = Color(0xFFF5F5F5))
 
                 // Dates Section
-                DetailItem("Application Start", job.startDate)
-                DetailItem("Application Deadline", job.lastDate)
+                DetailItem("Application Start", job.applicationStartDate)
+                DetailItem("Application Deadline", job.applicationDeadline)
 
                 // Links Section
                 Spacer(Modifier.height(8.dp))
@@ -328,7 +316,7 @@ fun JobDetailDialog(job: StandardizedJob, eligibility: EligibilityStatus, onDism
 
                 Spacer(Modifier.height(8.dp))
                 Text("Important Instructions", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFD32F2F))
-                Text(job.importantInstructions, fontSize = 13.sp, color = Color.DarkGray)
+                Text(job.requiredDocuments, fontSize = 13.sp, color = Color.DarkGray)
             }
         }
     )

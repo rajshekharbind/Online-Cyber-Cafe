@@ -15,17 +15,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MasterProfileScreen(onBack: () -> Unit, onNavigateToNotifications: () -> Unit) {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Personal", "Address", "Category")
+
+    // Req 58: Profile Change Audit Trail
+    val profileAuditLog = remember { mutableStateListOf<String>() }
+    var showAuditLog by remember { mutableStateOf(false) }
     
     // Dynamic Profile State
     val personalInfo = remember { mutableStateMapOf(
-        "Full Name" to "Rahul Kumar", "Father's Name" to "", "Mother's Name" to "", 
-        "DOB" to "15/08/2002", "Gender" to "Male", "Mobile Number" to "", 
+        "Full Name" to "Rahul Kumar", "Father's Name" to "", "Mother's Name" to "",
+        "DOB" to "15/08/2002", "Gender" to "Male", "Mobile Number" to "",
         "Email" to "rahul.k@example.com", "Nationality" to "Indian", "Marital Status" to "Single"
     ) }
     
@@ -95,12 +102,43 @@ fun MasterProfileScreen(onBack: () -> Unit, onNavigateToNotifications: () -> Uni
 
             Box(modifier = Modifier.weight(1f)) {
                 when (selectedTab) {
-                    0 -> InfoSection(personalInfo)
-                    1 -> InfoSection(addressInfo)
-                    2 -> InfoSection(categoryInfo)
+                    0 -> AuditedInfoSection(personalInfo, profileAuditLog)
+                    1 -> AuditedInfoSection(addressInfo, profileAuditLog)
+                    2 -> AuditedInfoSection(categoryInfo, profileAuditLog)
                 }
             }
-            
+
+            // Req 58: Audit Log Section
+            if (profileAuditLog.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.History, null, tint = Color(0xFF6A1B9A), modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Profile Edit History (${profileAuditLog.size})", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF6A1B9A))
+                            }
+                            TextButton(onClick = { showAuditLog = !showAuditLog }) {
+                                Text(if (showAuditLog) "Hide" else "Show", fontSize = 12.sp)
+                            }
+                        }
+                        if (showAuditLog) {
+                            profileAuditLog.takeLast(5).reversed().forEach { entry ->
+                                Text("• $entry", fontSize = 11.sp, color = Color.DarkGray, modifier = Modifier.padding(top = 2.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
             Button(
                 onClick = onBack,
                 modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
@@ -137,4 +175,28 @@ fun ProfileTextField(label: String, value: String, onValueChange: (String) -> Un
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp)
     )
+}
+
+/** Req 58: Wraps InfoSection so every field edit is logged with a timestamp */
+@Composable
+fun AuditedInfoSection(stateMap: MutableMap<String, String>, auditLog: MutableList<String>) {
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        stateMap.keys.forEach { label ->
+            ProfileTextField(
+                label = label,
+                value = stateMap[label] ?: "",
+                onValueChange = { newValue ->
+                    val oldValue = stateMap[label] ?: ""
+                    if (newValue != oldValue) {
+                        stateMap[label] = newValue
+                        val ts = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+                        auditLog.add("[$ts] '$label' changed from '${oldValue.ifBlank { "(empty)" }}' to '${newValue.ifBlank { "(empty)" }}'")
+                    }
+                }
+            )
+        }
+    }
 }

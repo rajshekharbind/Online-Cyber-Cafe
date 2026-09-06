@@ -448,6 +448,29 @@ object SecurityStore {
         logAction(actor, details, "INFO", "PAYMENT")
     }
 
+    // Req 63: Application Consent
+    data class ConsentRecord(
+        val timestamp: String,
+        val termsVersion: String,
+        val userId: String,
+        val applicationId: String
+    )
+
+    private val consents = mutableStateListOf<ConsentRecord>()
+
+    fun logConsent(userId: String, applicationId: String, termsVersion: String = "v1.0") {
+        val time = java.text.SimpleDateFormat(
+            "dd MMM yyyy, hh:mm:ss a",
+            java.util.Locale.getDefault()
+        ).format(java.util.Date())
+        consents.add(ConsentRecord(time, termsVersion, userId, applicationId))
+        logAction(userId, "Gave explicit consent for application $applicationId", "INFO", "LEGAL")
+    }
+
+    fun getConsentForApp(applicationId: String): ConsentRecord? {
+        return consents.find { it.applicationId == applicationId }
+    }
+
     fun logSecurityEvent(actor: String, event: String) {
         logAction(actor, event, "CRITICAL", "SECURITY")
     }

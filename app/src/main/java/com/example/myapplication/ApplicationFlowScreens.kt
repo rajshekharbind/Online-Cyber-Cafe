@@ -28,13 +28,18 @@ fun ApplicationSummaryScreen(
     onConfirm: () -> Unit,
     onBack: () -> Unit
 ) {
+    // Req 57: Duplicate Application Protection
+    val existingApp = AssignmentStore.getAssignments().find {
+        it.jobTitle.equals(jobTitle, ignoreCase = true)
+    }
+    val isDuplicate = existingApp != null
     var profileConfirmed by remember { mutableStateOf(false) }
     var docsConfirmed by remember { mutableStateOf(false) }
     var detailsConfirmed by remember { mutableStateOf(false) }
     var termsAccepted by remember { mutableStateOf(false) }
     var consentGiven by remember { mutableStateOf(false) }
 
-    val allConfirmed = profileConfirmed && docsConfirmed && detailsConfirmed && termsAccepted && consentGiven
+    val allConfirmed = !isDuplicate && profileConfirmed && docsConfirmed && detailsConfirmed && termsAccepted && consentGiven
 
     Scaffold(
         topBar = {
@@ -78,6 +83,28 @@ fun ApplicationSummaryScreen(
 
             Text("Verification & Consent", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Text("Please confirm the following before proceeding to payment:", fontSize = 13.sp, color = Color.Gray)
+
+            // Req 57: Duplicate warning banner
+            if (isDuplicate) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Warning, null, tint = Color(0xFFE65100))
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text("Application Already Submitted", fontWeight = FontWeight.Bold, color = Color(0xFFE65100))
+                            Text(
+                                "You have already applied for '$jobTitle' (ID: ${existingApp?.appId}). " +
+                                "Submitting again is not allowed to avoid duplication.",
+                                fontSize = 12.sp, color = Color.DarkGray
+                            )
+                        }
+                    }
+                }
+            }
 
             // 2. Checkboxes for Confirmation
             ConfirmationCheckbox("I confirm my Profile Information is accurate.", profileConfirmed) { profileConfirmed = it }

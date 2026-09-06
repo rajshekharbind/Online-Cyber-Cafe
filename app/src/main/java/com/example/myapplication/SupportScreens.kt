@@ -161,21 +161,21 @@ fun HelpSupportScreen(onBack: () -> Unit, onNavigateToChat: () -> Unit) {
 
             Text("Common Issues", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             
+            SupportActionCard("Raise a Support Ticket", "App status, missing OTP, etc.", Icons.Default.ConfirmationNumber) // Req 49
             SupportActionCard("Payment Failed", "Help with transaction issues", Icons.Default.Payment)
-            SupportActionCard("Document Rejected", "Why was my document rejected?", Icons.Default.Cancel)
             SupportActionCard("Job Application Status", "Tracking your form submission", Icons.Default.Info)
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Contact Us", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("Human-First Support", fontWeight = FontWeight.Bold, fontSize = 18.sp) // Req 51
 
             Button(
                 onClick = onNavigateToChat,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.Chat, contentDescription = null)
+                Icon(Icons.Default.SupportAgent, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Start Live Chat")
+                Text("Talk to a Human (Live Chat)")
             }
 
             OutlinedButton(
@@ -185,7 +185,7 @@ fun HelpSupportScreen(onBack: () -> Unit, onNavigateToChat: () -> Unit) {
             ) {
                 Icon(Icons.Default.Call, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Call Customer Care")
+                Text("Talk to a Human (Call Us)")
             }
         }
     }

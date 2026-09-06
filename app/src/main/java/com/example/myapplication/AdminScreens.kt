@@ -99,7 +99,11 @@ fun AdminDashboardScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     StatCard("Official", "₹45k", Icons.Default.AccountBalance, Color(0xFF303F9F), Modifier.weight(1f))
                     StatCard("Service", "₹12.5k", Icons.Default.MonetizationOn, Color(0xFF388E3C), Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     StatCard("Today", "₹2.1k", Icons.Default.Today, Color(0xFF0288D1), Modifier.weight(1f))
+                    StatCard("Monthly", "₹35k", Icons.Default.DateRange, Color(0xFF7B1FA2), Modifier.weight(1f))
                 }
             }
 
@@ -823,6 +827,28 @@ fun AdminActionCard(title: String, subtitle: String, icon: ImageVector, color: C
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostJobScreen(onBack: () -> Unit) {
+    var title by remember { mutableStateOf("") }
+    var organization by remember { mutableStateOf("") }
+    var officialUrl by remember { mutableStateOf("") } // Req 61
+    var notificationUrl by remember { mutableStateOf("") } // Req 61
+    var deadline by remember { mutableStateOf("") }
+    var officialFee by remember { mutableStateOf("") }
+    var serviceFee by remember { mutableStateOf("") }
+    var eligibility by remember { mutableStateOf("") } // Req 61
+    var otherDetails by remember { mutableStateOf("") } // Req 61
+    var showSuccess by remember { mutableStateOf(false) }
+
+    if (showSuccess) {
+        AlertDialog(
+            onDismissRequest = { showSuccess = false },
+            title = { Text("Success") },
+            text = { Text("Job added successfully.") },
+            confirmButton = {
+                Button(onClick = { showSuccess = false; onBack() }) { Text("OK") }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -843,15 +869,53 @@ fun PostJobScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            OutlinedTextField(value = "", onValueChange = {}, label = { Text("Job Title") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = "", onValueChange = {}, label = { Text("Organization") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = "", onValueChange = {}, label = { Text("Deadline Date") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = "", onValueChange = {}, label = { Text("Official Fee") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = "", onValueChange = {}, label = { Text("Service Fee") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Job Title") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = organization, onValueChange = { organization = it }, label = { Text("Organization") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = officialUrl, onValueChange = { officialUrl = it }, label = { Text("Official Source URL") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = notificationUrl, onValueChange = { notificationUrl = it }, label = { Text("Notification PDF / Link") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = deadline, onValueChange = { deadline = it }, label = { Text("Deadline Date") }, modifier = Modifier.fillMaxWidth())
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = officialFee, onValueChange = { officialFee = it }, label = { Text("Official Fee (₹)") }, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = serviceFee, onValueChange = { serviceFee = it }, label = { Text("Service Fee (₹)") }, modifier = Modifier.weight(1f))
+            }
+            OutlinedTextField(value = eligibility, onValueChange = { eligibility = it }, label = { Text("Eligibility Criteria") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+            OutlinedTextField(value = otherDetails, onValueChange = { otherDetails = it }, label = { Text("Other Details (Instructions)") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+            Button(onClick = { 
+                if (title.isNotBlank()) {
+                    JobStore.addJob(
+                        StandardizedJob(
+                            id = "JOB-${(100..999).random()}",
+                            title = title,
+                            organization = organization,
+                            description = otherDetails.ifBlank { "Manually added by Admin" },
+                            department = "Various",
+                            type = "Government",
+                            location = "India",
+                            qualification = eligibility.ifBlank { "Any" },
+                            branch = "Any",
+                            ageLimit = "18-40",
+                            categoryRules = "Standard",
+                            experience = "Fresher",
+                            salary = "Standard",
+                            startDate = "Today",
+                            lastDate = deadline,
+                            officialFee = "₹$officialFee",
+                            serviceCharge = "₹$serviceFee",
+                            jobUrl = officialUrl.ifBlank { "https://example.com" },
+                            notificationUrl = notificationUrl.ifBlank { "https://example.com" },
+                            importantInstructions = otherDetails,
+                            source = "Admin Manual Entry",
+                            status = JobStatus.ACTIVE,
+                            lastVerified = "Just now",
+                            isActive = true
+                        )
+                    )
+                    showSuccess = true
+                }
+            }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                 Text("Publish Job Listing")
             }
         }

@@ -63,15 +63,50 @@ fun DocumentVaultScreen(onBack: () -> Unit) {
     var selectedIndexForUpload by remember { mutableStateOf<Int?>(null) }
     var showViewDialog by remember { mutableStateOf<VaultDocument?>(null) }
     var showDeleteConfirm by remember { mutableStateOf<Int?>(null) }
+    var fileValidationError by remember { mutableStateOf<String?>(null) } // Req 59
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     val pickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null && selectedIndexForUpload != null) {
-            val doc = documents[selectedIndexForUpload!!]
-            documents[selectedIndexForUpload!!] = doc.copy(uri = uri, status = "Pending Verification")
+            // Req 59: Validate file type and size before accepting
+            val mimeType = context.contentResolver.getType(uri) ?: ""
+            val allowedTypes = listOf("image/jpeg", "image/png", "application/pdf")
+            val sizeBytes = context.contentResolver.openAssetFileDescriptor(uri, "r")?.length ?: 0L
+            val maxSizeBytes = 2 * 1024 * 1024L // 2 MB
+
+            when {
+                mimeType !in allowedTypes -> {
+                    fileValidationError = "Invalid file type: '$mimeType'.\nOnly PDF, JPG, and PNG files are allowed."
+                }
+                sizeBytes > maxSizeBytes -> {
+                    val sizeMb = String.format("%.1f", sizeBytes / (1024.0 * 1024.0))
+                    fileValidationError = "File is too large (${sizeMb} MB).\nMaximum allowed size is 2 MB. Please compress or re-scan the document."
+                }
+                else -> {
+                    val doc = documents[selectedIndexForUpload!!]
+                    documents[selectedIndexForUpload!!] = doc.copy(uri = uri, status = "Pending Verification")
+                }
+            }
         }
         selectedIndexForUpload = null
+    }
+
+    // Req 59: File validation error dialog
+    if (fileValidationError != null) {
+        AlertDialog(
+            onDismissRequest = { fileValidationError = null },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Error, null, tint = Color.Red)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Upload Failed", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = { Text(fileValidationError!!) },
+            confirmButton = { Button(onClick = { fileValidationError = null }) { Text("OK, Got It") } }
+        )
     }
 
     if (showDeleteConfirm != null) {

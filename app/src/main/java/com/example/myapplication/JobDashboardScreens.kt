@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentJobDashboardScreen(
@@ -30,65 +32,41 @@ fun StudentJobDashboardScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToApply: (String, String, String, String) -> Unit,
     onNavigateToNotifications: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    jobViewModel: JobViewModel = viewModel(factory = LocalAppViewModelFactory.current)
 ) {
-    // Shared state for jobs
-    val allJobs = remember {
-        mutableStateListOf(
-            StandardizedJob(
-                "JOB-101", "SSC CGL 2024", "SSC", "Combined Graduate Level Examination for various Group B & C posts.", "Central", "Government", "India", "Degree", "Any", "18-32", "OBC/SC/ST as per Govt", "Fresher", "₹45k-1.5L", "24 Jun 2024", "15 Sep 2024", "₹100", "₹50", "https://ssc.gov.in", "https://ssc.gov.in/notif", "Ensure all documents are clear before upload.", "Official SSC Portal", JobStatus.ACTIVE, "10 mins ago"
-            ),
-            StandardizedJob(
-                "JOB-106", "Specialist Officer", "SBI", "Recruitment of Junior Associates and Specialist Officers in SBI.", "Banking", "Government", "India", "B.Tech", "CSE/IT", "18-27", "Min 7.0 CGPA", "1 Year", "₹65k+", "15 Aug 2024", "25 Aug 2024", "₹750", "₹50", "https://sbi.co.in", "https://sbi.co.in/careers", "Keep mobile ready for OTP during payment.", "SBI Careers", JobStatus.ACTIVE, "Just now"
-            ),
-            StandardizedJob(
-                "JOB-102", "Software Engineer", "TCS", "Software development roles at TCS.", "IT", "Private", "Noida", "B.Tech", "CSE/IT", "21-28", "N/A", "1-2 Years", "₹6.5 LPA", "01 Aug 2024", "30 Aug 2024", "₹0", "₹100", "https://tcs.com", "https://tcs.com/careers", "Check email for interview slots.", "TCS Careers", JobStatus.ACTIVE, "1 hour ago"
-            ),
-            StandardizedJob(
-                "JOB-103", "Railway Technician", "RRB", "Railways Recruitment Board - Technician Grade III.", "Railways", "Government", "Zonal", "Diploma", "Mechanical", "18-30", "Govt Rules", "ITI/Diploma", "₹35k+", "10 Jul 2024", "05 Oct 2024", "₹500", "₹50", "https://rrb.gov.in", "https://rrb.gov.in/notif", "Offline signature scan required.", "RRB Website", JobStatus.ACTIVE, "Recently"
-            )
-        )
-    }
+    val jobsState by jobViewModel.jobsUiState.collectAsState()
 
-    // Student profile
+    // Student profile (mock for now, should come from ProfileViewModel)
     val studentProfile = remember {
         mapOf("age" to 21, "degree" to "B.Tech", "branch" to "CSE", "cgpa" to 7.47, "state" to "Bihar")
     }
 
-    // Eligibility Logic (duplicated for simplicity in this demo, in real app move to ViewModel)
-    fun calculateEligibility(job: StandardizedJob): EligibilityStatus {
-        val studentAge = studentProfile["age"] as Int
-        val studentDegree = studentProfile["degree"] as String
-        val studentBranch = studentProfile["branch"] as String
+    // Eligibility Logic using JobEntity
+    fun calculateEligibility(job: JobEntity): EligibilityStatus {
         val studentCgpa = studentProfile["cgpa"] as Double
-        val studentState = studentProfile["state"] as String
+        val studentBranch = studentProfile["branch"] as String
 
-        if (job.ageLimit.contains("-")) {
-            val parts = job.ageLimit.split("-")
-            val min = parts[0].toIntOrNull() ?: 0
-            val max = parts[1].toIntOrNull() ?: 99
-            if (studentAge < min || studentAge > max) return EligibilityStatus.NOT_ELIGIBLE
-        }
-        if (job.qualification != "Degree" && job.qualification != "Any" && job.qualification != studentDegree) return EligibilityStatus.NOT_ELIGIBLE
-        if (job.branch != "Any" && !job.branch.contains(studentBranch)) return EligibilityStatus.POTENTIALLY_ELIGIBLE
-        if (job.categoryRules.contains("CGPA")) {
-            val req = job.categoryRules.filter { it.isDigit() || it == '.' }.toDoubleOrNull() ?: 0.0
-            if (studentCgpa < req) return EligibilityStatus.NOT_ELIGIBLE
+        if (studentCgpa < job.minCgpa) return EligibilityStatus.NOT_ELIGIBLE
+        if (job.eligibleBranches != "Any" && !job.eligibleBranches.contains(studentBranch)) {
+            return EligibilityStatus.POTENTIALLY_ELIGIBLE
         }
         return EligibilityStatus.ELIGIBLE
     }
 
-    var selectedJobForDetail by remember { mutableStateOf<StandardizedJob?>(null) }
+    var selectedJobForDetail by remember { mutableStateOf<JobEntity?>(null) }
 
     if (selectedJobForDetail != null) {
+        val job = selectedJobForDetail!!
         JobDetailDialog(
-            job = selectedJobForDetail!!,
-            eligibility = calculateEligibility(selectedJobForDetail!!),
+            job = job,
+            eligibility = calculateEligibility(job),
             onDismiss = { selectedJobForDetail = null },
             onApply = { 
-                val serviceFee = ServiceChargeEngine.calculateServiceFee(selectedJobForDetail!!.officialFee.replace("₹","").toInt())
-                val totalAmount = "₹${selectedJobForDetail!!.officialFee.replace("₹","").toInt() + serviceFee}"
-                onNavigateToApply(selectedJobForDetail!!.title, selectedJobForDetail!!.officialFee, "₹$serviceFee", totalAmount)
+                val officialFeeNum = job.officialFee.replace("₹", "").toIntOrNull() ?: 0
+                val serviceFeeNum = ServiceChargeEngine.calculateServiceFee(officialFeeNum)
+                val totalAmount = "₹${officialFeeNum + serviceFeeNum}"
+                onNavigateToApply(job.title, job.officialFee, "₹$serviceFeeNum", totalAmount)
                 selectedJobForDetail = null
             }
         )
@@ -115,33 +93,53 @@ fun StudentJobDashboardScreen(
             }
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.padding(innerPadding).fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            item {
-                DashboardJobSection(
-                    title = "Recommended Jobs",
-                    subtitle = "Based on your B.Tech CSE profile",
-                    jobs = allJobs.filter { calculateEligibility(it) == EligibilityStatus.ELIGIBLE },
-                    onJobClick = { selectedJobForDetail = it }
-                )
-            }
-
-            item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    CategorySmallCard("Government", allJobs.count { it.type == "Government" }.toString(), Icons.Default.AccountBalance, Color(0xFF1976D2), Modifier.weight(1f))
-                    CategorySmallCard("Private", allJobs.count { it.type == "Private" }.toString(), Icons.Default.Business, Color(0xFF388E3C), Modifier.weight(1f))
+        when (val state = jobsState) {
+            is UiState.Loading -> {
+                Box(modifier = Modifier.padding(innerPadding).fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
             }
+            is UiState.Error -> {
+                Box(modifier = Modifier.padding(innerPadding).fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Error loading jobs: ${state.message}", color = Color.Red)
+                }
+            }
+            is UiState.Empty -> {
+                Box(modifier = Modifier.padding(innerPadding).fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No jobs found.", color = Color.Gray)
+                }
+            }
+            is UiState.Success -> {
+                val allJobs = state.data
+                LazyColumn(
+                    modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    item {
+                        DashboardJobSection(
+                            title = "Recommended Jobs",
+                            subtitle = "Based on your profile",
+                            jobs = allJobs.filter { calculateEligibility(it) == EligibilityStatus.ELIGIBLE },
+                            onJobClick = { selectedJobForDetail = it }
+                        )
+                    }
 
-            item {
-                Text("All Available Jobs", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                Spacer(Modifier.height(12.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    allJobs.forEach { job ->
-                        CompactJobRow(job, onClick = { selectedJobForDetail = job })
+                    item {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            CategorySmallCard("Government", allJobs.count { it.jobType == "Government" }.toString(), Icons.Default.AccountBalance, Color(0xFF1976D2), Modifier.weight(1f))
+                            CategorySmallCard("Private", allJobs.count { it.jobType == "Private" }.toString(), Icons.Default.Business, Color(0xFF388E3C), Modifier.weight(1f))
+                        }
+                    }
+
+                    item {
+                        Text("All Available Jobs", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Spacer(Modifier.height(12.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            allJobs.forEach { job ->
+                                CompactJobRow(job, onClick = { selectedJobForDetail = job })
+                            }
+                        }
                     }
                 }
             }
@@ -150,7 +148,7 @@ fun StudentJobDashboardScreen(
 }
 
 @Composable
-fun DashboardJobSection(title: String, subtitle: String, jobs: List<StandardizedJob>, onJobClick: (StandardizedJob) -> Unit) {
+fun DashboardJobSection(title: String, subtitle: String, jobs: List<JobEntity>, onJobClick: (JobEntity) -> Unit) {
     Column {
         Text(title, fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Text(subtitle, fontSize = 12.sp, color = Color.Gray)
@@ -164,7 +162,7 @@ fun DashboardJobSection(title: String, subtitle: String, jobs: List<Standardized
 }
 
 @Composable
-fun ElevatedJobCard(job: StandardizedJob, color: Color, onClick: () -> Unit) {
+fun ElevatedJobCard(job: JobEntity, color: Color, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.width(260.dp),
@@ -199,7 +197,7 @@ fun CategorySmallCard(title: String, count: String, icon: ImageVector, color: Co
 }
 
 @Composable
-fun CompactJobRow(job: StandardizedJob, onClick: () -> Unit) {
+fun CompactJobRow(job: JobEntity, onClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
